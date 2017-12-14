@@ -26,7 +26,8 @@ public enum LoginResponseCode {
     BLOCKED(2),
     SUCCESS(3),
     SERVICE_UNAVAILABLE(4),
-    WRONG_INFO(5);
+    WRONG_INFO(5),
+    UNVERIFIED(6);
     
     private int code;
     

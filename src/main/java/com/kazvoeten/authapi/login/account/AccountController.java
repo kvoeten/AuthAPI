@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AccountController {
     private final AtomicLong counter = new AtomicLong();
-    private static final Account basic = new Account(-1, "", "", "", "", (byte) 0, (byte) 0, (byte) 0, new Date(), new Date(), new Date(), new Date());
+    private static final Account basic = new Account(-1, false, "", "", "", "", (byte) 0, (byte) 0, (byte) 0, new Date(), new Date(), new Date(), new Date());
     
     @RequestMapping("/account")
     public Account account(@RequestParam(value="token", defaultValue="null") String token) {

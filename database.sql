@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   `admin` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `gender` tinyint(2) unsigned NOT NULL DEFAULT '10',
   `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `verified` BOOL NOT NULL DEFAULT false,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`),
   UNIQUE KEY `email_UNIQUE` (`email`),

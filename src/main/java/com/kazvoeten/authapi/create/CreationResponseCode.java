@@ -22,9 +22,10 @@ package com.kazvoeten.authapi.create;
  */
 public enum CreationResponseCode {
 
-    SUCCES(0),
+    SUCCESS(0),
     FAILED(1),
-    RECENT_BLOCK(2);
+    RECENT_BLOCK(2),
+    EXISTS_UNVERIFIED(3);
 
     private final int code;
 

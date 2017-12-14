@@ -32,9 +32,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.util.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -47,7 +49,9 @@ public class Database {
     private static final HikariConfig config; //Hikari database config.
     private static final HikariDataSource ds; //Hikari datasource based on config.
     private static HashMap<String, Account> accounts = new HashMap<>(); //Map of loaded accounts by token.
+    private static HashMap<String, Pair<Integer, Date>> authCodes = new HashMap<>(); //Map of account verification codes sorted by name.
     private static ReentrantLock lock = new ReentrantLock(true); //Fair lock to ensure DB concurrency. (Might be pointless in hindsight)
+    private static Random rand = new Random();
 
     static {
         //Check if file exists, if not: create and use default file.
@@ -100,7 +104,7 @@ public class Database {
                 }
                 Date genTime = new Date();
                 String token = TokenFactory.genToken(id, name, genTime);
-                accounts.put(token, new Account(id, rs.getString("name"), token, rs.getString("email"), rs.getString("ip"),
+                accounts.put(token, new Account(id, false, rs.getString("name"), token, rs.getString("email"), rs.getString("ip"),
                         rs.getByte("state"), rs.getByte("admin"), rs.getByte("gender"),
                         rs.getDate("creation"), genTime, rs.getDate("history"), rs.getDate("birthday")));
                 return LoginResponseCode.SUCCESS;
@@ -138,16 +142,22 @@ public class Database {
         return accounts.get(token);
     }
 
-    public static boolean isDuplicateName(String name, String email) {
+    public static CreationResponseCode verifyAccount(String name, String email) {
         try {
             Connection connection = ds.getConnection();
             PreparedStatement ps = connection.prepareStatement("SELECT * FROM accounts WHERE name = ? OR email = ?");
             ps.setString(1, name);
             ps.setString(2, email);
             ResultSet rs = ps.executeQuery();
-            return rs.first();
+            if (rs.first()) {
+                if (rs.getBoolean("verified")) {
+                    return CreationResponseCode.FAILED;
+                } 
+                return CreationResponseCode.EXISTS_UNVERIFIED;
+            }
+            return CreationResponseCode.SUCCESS;
         } catch (Exception ex) {
-            return true;
+            return CreationResponseCode.FAILED;
         }
     }
     
@@ -186,7 +196,8 @@ public class Database {
             ps.setByte(7, (byte) Integer.parseInt(gender));
             ps.setString(8, ip);
             ps.execute();
-            ret = CreationResponseCode.SUCCES;
+            authCodes.put(name, new Pair<>(rand.nextInt(Integer.MIN_VALUE), new Date()));
+            ret = CreationResponseCode.SUCCESS;
         } finally {
             lock.unlock();
             return ret;
@@ -206,5 +217,24 @@ public class Database {
         } finally {
             lock.unlock();
         }
+    }
+    
+    public static void checkAuthCodesExpirated() {
+        long expiration = (1000 * 60 * 15); //Auth codes expire after 15 mins.
+        long time = (new Date()).getTime(); //Current time.
+        try {
+            lock.lock();
+            authCodes.forEach((name, pair) -> {
+                if (pair.getValue().getTime() + expiration <= time) {
+                    authCodes.remove(name);
+                }
+            });
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    public static int getAuthCode(String name) {
+        return authCodes.get(name).getKey();
     }
 }
