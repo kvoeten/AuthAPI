@@ -27,6 +27,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class Application {
 
+    /**
+     * Initializes the application.
+     * 
+     * @param args Start line args.
+     */
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }

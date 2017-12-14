@@ -24,9 +24,15 @@ import java.util.HashMap;
  */
 public class CreationThrottle {
 
-    private static HashMap<String, Long> history = new HashMap<>();
-    private static final int time = 1000 * 60 * 15;
+    private static HashMap<String, Long> history = new HashMap<>(); //Map of recent account creations by IP.
+    private static final int time = 1000 * 60 * 15; //15 Minutes between each creation.
 
+    /**
+     * Checks if the supplied IP has created an Account in the last @time minutes.
+     * 
+     * @param IP User's remote address.
+     * @return true if user has not made an account recently.
+     */
     public static boolean checkIP(String IP) {
         if (history.containsKey(IP)) {
             if (history.get(IP) <= System.currentTimeMillis()) {

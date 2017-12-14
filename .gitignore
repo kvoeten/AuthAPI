@@ -1,10 +1,9 @@
 /dist/*
 .classpath
-.properties
+*.properties
+*.ini
 .settings/
 dist/
-*.txt
-wz/
 target/
 /bin/
 New folder/

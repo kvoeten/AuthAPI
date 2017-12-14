@@ -32,6 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.joda.time.DateTime;
@@ -43,11 +44,13 @@ import org.joda.time.DateTimeZone;
  */
 public class Database {
 
-    private static final HikariConfig config;
-    private static final HikariDataSource ds;
-    private static HashMap<String, Account> accounts = new HashMap<>();
+    private static final HikariConfig config; //Hikari database config.
+    private static final HikariDataSource ds; //Hikari datasource based on config.
+    private static HashMap<String, Account> accounts = new HashMap<>(); //Map of loaded accounts by token.
+    private static ReentrantLock lock = new ReentrantLock(true); //Fair lock to ensure DB concurrency. (Might be pointless in hindsight)
 
     static {
+        //Check if file exists, if not: create and use default file.
         File properties = new File("database.properties");
         if (!properties.exists()) {
             try (FileOutputStream fout = new FileOutputStream(properties)) {
@@ -69,6 +72,15 @@ public class Database {
         ds = new HikariDataSource(config);
     }
 
+    /**
+     * Loads an account from the database by given name/e-mail.
+     * If the password matches the on in the database a token is generated and the account is loaded.
+     * Incorrect account info or database errors are caught and result in different return codes.
+     * 
+     * @param name Account username or email
+     * @param password Account password (plaintext)
+     * @return LoginResponseCode operation result.
+     */
     public static LoginResponseCode processLogin(String name, String password) {
         try {
             Connection connection = ds.getConnection();
@@ -101,6 +113,12 @@ public class Database {
         }
     }
 
+    /**
+     * Gets Account from loaded accounts by name
+     * 
+     * @param name Name of the Account.
+     * @return Account
+     */
     public static Account getAccountByName(String name) {
         for (Account acc : accounts.values()) {
             if (acc.getName().equals(name)) {
@@ -110,6 +128,12 @@ public class Database {
         return null;
     }
 
+    /**
+     * Gets Account from loaded accounts by token
+     * 
+     * @param token Token assigned to the Account.
+     * @return Account
+     */
     public static Account getAccountByToken(String token) {
         return accounts.get(token);
     }
@@ -127,8 +151,21 @@ public class Database {
         }
     }
     
+    /**
+     * 
+     * 
+     * @param email New Account's email
+     * @param name New Account's name
+     * @param password New Account's password
+     * @param birthday New Account's birthday
+     * @param gender New Account's gender
+     * @param ip New Account's ip
+     * @return 
+     */
     public static CreationResponseCode createAccount(String email, String name, String password, String birthday, String gender, String ip) {
+        CreationResponseCode ret = CreationResponseCode.FAILED;
         try {
+            lock.lock();
             Connection connection = ds.getConnection();
             PreparedStatement ps = connection.prepareStatement(""
                     + "INSERT INTO accounts (name, email, password, birthday, creation, history, gender, ip) "
@@ -149,10 +186,25 @@ public class Database {
             ps.setByte(7, (byte) Integer.parseInt(gender));
             ps.setString(8, ip);
             ps.execute();
-            return CreationResponseCode.SUCCES;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return CreationResponseCode.FAILED;
+            ret = CreationResponseCode.SUCCES;
+        } finally {
+            lock.unlock();
+            return ret;
+        }
+    }
+    
+    public static void checkTokenExpiration() {
+        long expiration = (1000 * 60 * 15); //Tokens expire after 15 mins.
+        long time = (new Date()).getTime(); //Current time.
+        try {
+            lock.lock();
+            accounts.forEach((token, account) -> {
+                if (account.getLoaded().getTime() + expiration <= time) {
+                    accounts.remove(token);
+                }
+            });
+        } finally {
+            lock.unlock();
         }
     }
 }

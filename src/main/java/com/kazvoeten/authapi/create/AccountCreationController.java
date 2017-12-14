@@ -31,6 +31,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountCreationController {
     private final AtomicLong counter = new AtomicLong();
 
+    /**
+     * Controls Account creation API requests.
+     * 
+     * @param email Supplied email parameter.
+     * @param name Supplied name parameter.
+     * @param password Supplied password parameter.
+     * @param birthday Supplied birthday parameter.
+     * @param gender Supplied gender parameter.
+     * @param request Supplied request parameter.
+     * 
+     * @return new Account with supplied parameters as configuration.
+     */
     @RequestMapping("/create")
     public AccountCreationResponse create(
             @RequestParam(value = "email", defaultValue = "") String email,
@@ -40,9 +52,9 @@ public class AccountCreationController {
             @RequestParam(value = "gender", defaultValue = "") String gender,
             HttpServletRequest request) {
 
-        String ip = request.getRemoteAddr();
+        String ip = request.getRemoteAddr(); //Verify if IP has made an account recently.
         if (CreationThrottle.checkIP(ip)) {
-            if (Database.isDuplicateName(name, email)) {
+            if (Database.isDuplicateName(name, email)) { //Check if name/email already exists in DB.
                 return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
                         "The provided name or email is already in use.");
             } else {

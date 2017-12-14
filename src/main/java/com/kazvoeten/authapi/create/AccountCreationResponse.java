@@ -21,18 +21,30 @@ package com.kazvoeten.authapi.create;
  * @author kaz_v
  */
 public class AccountCreationResponse {
-    private final int value;
-    private final String response;
+    private final int value; //Response value
+    private final String response; //Response message
     
+    /**
+     * API response constructor
+     * 
+     * @param value API response value.
+     * @param response API response text.
+     */
     public AccountCreationResponse(int value, String response) {
         this.value = value;
         this.response = response;
     }
     
+    /**
+     * @return  Object's API response code value.
+     */
     public int getValue() {
         return value;
     }
     
+    /**
+     * @return Object's API response text.
+     */
     public String getResponse() {
         return response;
     }
