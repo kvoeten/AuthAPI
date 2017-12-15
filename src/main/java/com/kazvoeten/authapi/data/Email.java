@@ -26,32 +26,37 @@ import javax.mail.internet.MimeMessage;
 public class Email {
     private static final String host, service, address;
     private static final String authMessage = 
-            "Your %s authentication code is: %n.\r\n"
+            "Your %s authentication code is: %s.\r\n"
             + "This code will remain valid for 15 minutes.\r\n"
             + "\r\nIf you did not request this code you can ignore this message.";
 
-    public static void sendAuthMail(String recipent, int code) throws AddressException, MessagingException {
+    public static void sendAuthMail(String recipent, String code) throws AddressException, MessagingException {
         System.out.println(recipent);
 
         Properties properties = System.getProperties();
         properties.setProperty("mail.smtp.host", host);
+    	properties.put("mail.transport.protocol", "smtp");
+    	properties.put("mail.smtp.port", 25); 
 
         Session session = Session.getDefaultInstance(properties);
 
         try {
             MimeMessage message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(address));
+            message.setFrom(new InternetAddress(address, "Verification generator."));
 
-            message.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(host));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipent));
 
             message.setSubject(String.format("Your %s verification code.", service));
             message.setText(String.format(authMessage, service, code));
 
-            Transport.send(message);
-        } catch (MessagingException mex) {
-            mex.printStackTrace();
+            Transport transport = session.getTransport();
+            transport.connect(host, "", "");
+            transport.sendMessage(message, message.getAllRecipients());
+            transport.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
+        
 
     }
     

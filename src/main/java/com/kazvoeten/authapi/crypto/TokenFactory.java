@@ -158,4 +158,16 @@ public class TokenFactory {
 
         return pDest;
     }
+    
+    /**
+     * Returns a random 4 digit string code.
+     * 
+     * @return random 4 digit code.
+     */
+    public static String genAuthenCode() {
+        return String.valueOf(rand.nextInt(9))
+                + String.valueOf(rand.nextInt(9))
+                + String.valueOf(rand.nextInt(9))
+                + String.valueOf(rand.nextInt(9));
+    }
 }

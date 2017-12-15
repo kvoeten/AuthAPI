@@ -49,7 +49,7 @@ public class Database {
     private static final HikariConfig config; //Hikari database config.
     private static final HikariDataSource ds; //Hikari datasource based on config.
     private static HashMap<String, Account> accounts = new HashMap<>(); //Map of loaded accounts by token.
-    private static HashMap<String, Pair<Integer, Date>> authCodes = new HashMap<>(); //Map of account verification codes sorted by name.
+    private static HashMap<String, Pair<String, Date>> authCodes = new HashMap<>(); //Map of account verification codes sorted by name.
     private static Random rand = new Random();
 
     static {
@@ -222,14 +222,14 @@ public class Database {
         });
     }
 
-    public static int getAuthCode(String name) {
+    public static String getAuthCode(String name) {
         if (authCodes.containsKey(name)) {
             return authCodes.get(name).getKey();
         }
-        return -1;
+        return "";
     }
 
     public static void addAuthcode(String name) {
-        authCodes.put(name, new Pair<>(rand.nextInt(Integer.MAX_VALUE), new Date()));
+        authCodes.put(name, new Pair<>(TokenFactory.genAuthenCode(), new Date()));
     }
 }
