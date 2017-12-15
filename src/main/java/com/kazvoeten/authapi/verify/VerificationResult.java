@@ -14,27 +14,21 @@
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.kazvoeten.authapi.create;
+package com.kazvoeten.authapi.verify;
 
 /**
  *
  * @author kaz_v
  */
-public enum CreationResponseCode {
+public class VerificationResult {
 
-    SUCCESS(0),
-    FAILED(1),
-    RECENT_BLOCK(2),
-    EXISTS_UNVERIFIED(3);
+    private final String message;
 
-    private final int code;
-
-    CreationResponseCode(int code) {
-        this.code = code;
+    public VerificationResult(String message) {
+        this.message = message;
     }
 
-    public int getValue() {
-        return this.code;
+    public String getMessage() {
+        return message;
     }
-
 }

@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.kazvoeten.authapi.login;
 
 /**
@@ -21,24 +21,25 @@ package com.kazvoeten.authapi.login;
  * @author kaz_v
  */
 public class LoginResponse {
+
     private final int response;
     private final String name;
     private final String token;
-    
+
     public LoginResponse(String name, String token, LoginResponseCode response) {
         this.name = name;
         this.token = token;
         this.response = response.getValue();
     }
-    
+
     public int getResponse() {
         return response;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public String getToken() {
         return token;
     }

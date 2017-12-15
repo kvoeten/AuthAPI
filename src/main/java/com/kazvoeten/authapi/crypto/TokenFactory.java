@@ -13,14 +13,13 @@
 
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.kazvoeten.authapi.crypto;
 
-import java.security.Key;
+import com.kazvoeten.authapi.Application;
 import java.util.Date;
 import java.util.Random;
 import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
@@ -28,7 +27,6 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class TokenFactory {
 
-    private static final Key KEY = new SecretKeySpec("NovakMadeDisTing".getBytes(), "AES");
     private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
     private static final Random rand = new Random();
 
@@ -51,7 +49,7 @@ public class TokenFactory {
 
         try {
             Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.ENCRYPT_MODE, KEY);
+            cipher.init(Cipher.ENCRYPT_MODE, Application.TOKEN_ENCRYPTION_KEY);
             byte[] encrypted = cipher.doFinal(encrypt(aTokenText, IV));
 
             byte[] token = new byte[encrypted.length + 4];
@@ -66,7 +64,7 @@ public class TokenFactory {
 
     /**
      * Extracts the original token data from an encrypted token string.
-     * 
+     *
      * @param token Encrypted token
      * @return String[] with token's original data (ID, name, creationTime)
      */
@@ -79,14 +77,14 @@ public class TokenFactory {
         System.arraycopy(aTokenText, 4, aToken, 0, aTokenText.length - 4);
 
         int IV = ((int) aIV[0]) & 0xFF | (aIV[1] << 8) & 0xFF00 | (aIV[2] << 16) & 0xFF0000 | (aIV[3] << 24) & 0xFF000000;
-        
+
         try {
             Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.DECRYPT_MODE, KEY);
-            
+            cipher.init(Cipher.DECRYPT_MODE, Application.TOKEN_ENCRYPTION_KEY);
+
             byte[] decrypted = cipher.doFinal(decrypt(aToken, IV));
             String realToken = new String(decrypted);
-            
+
             return realToken.split(":");
         } catch (Exception ex) {
             return null;
@@ -158,10 +156,10 @@ public class TokenFactory {
 
         return pDest;
     }
-    
+
     /**
      * Returns a random 4 digit string code.
-     * 
+     *
      * @return random 4 digit code.
      */
     public static String genAuthenCode() {

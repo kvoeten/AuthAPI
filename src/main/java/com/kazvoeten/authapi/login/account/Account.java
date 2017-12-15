@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.kazvoeten.authapi.login.account;
 
 import java.util.Date;
@@ -31,10 +31,10 @@ public class Account {
     private final Date created, loaded, history, birthday;
 
     public Account(int id, boolean verified,
-            String name, String token, String email, String ip, 
-            byte state, byte admin, byte gender, 
+            String name, String token, String email, String ip,
+            byte state, byte admin, byte gender,
             Date created, Date loaded, Date history, Date birthday) {
-        
+
         this.id = id;
         this.verified = verified;
         this.name = name;
@@ -48,13 +48,13 @@ public class Account {
         this.loaded = loaded;
         this.history = history;
         this.birthday = birthday;
-        
+
     }
 
     public int getId() {
         return id;
     }
-    
+
     public boolean getVerified() {
         return verified;
     }
@@ -70,11 +70,11 @@ public class Account {
     public String getEmail() {
         return email;
     }
-    
+
     public String getIP() {
         return ip;
     }
-    
+
     public byte getAdmin() {
         return admin;
     }
@@ -82,7 +82,7 @@ public class Account {
     public byte getGender() {
         return gender;
     }
-    
+
     public byte getState() {
         return state;
     }
@@ -94,11 +94,11 @@ public class Account {
     public Date getLoaded() {
         return loaded;
     }
-    
+
     public Date getHistory() {
         return history;
     }
-    
+
     public Date getBirthday() {
         return birthday;
     }

@@ -18,11 +18,14 @@ package com.kazvoeten.authapi.create;
 
 import com.kazvoeten.authapi.data.Database;
 import com.kazvoeten.authapi.data.Email;
+import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
+import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang.CharEncoding;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,15 +60,57 @@ public class AccountCreationController {
             @RequestParam(value = "gender", defaultValue = "") String gender,
             HttpServletRequest request) {
 
+        try {
+            (new InternetAddress(email)).validate();
+        } catch (Exception ex) {
+            return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
+                    "Invalid e-mail address.");
+        }
+
+        if (name.length() < 5 && email.length() > 13) {
+            return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
+                    "Username has to be at least 5 and maximum 13 characters long.");
+        }
+
+        if (!(gender.equals("0") || !gender.equals("1"))) {
+            return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
+                    "Gender has to be either 0 (male) or 1 (female).");
+        }
+
+        if (!Charset.forName(CharEncoding.UTF_8).newEncoder().canEncode(name)) {
+            return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
+                    "Username contains invalid characters. Only utf8 characters are supported.");
+        }
+
+        if (!Charset.forName(CharEncoding.UTF_8).newEncoder().canEncode(password)) {
+            return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
+                    "Password contains invalid characters. Only utf8 characters are supported.");
+        }
+
+        try {
+            int day = Integer.parseInt(birthday.substring(0, 2));
+            int month = Integer.parseInt(birthday.substring(2, 4));
+            int year = Integer.parseInt(birthday.substring(4, 8));
+            if (day > 31 || day < 1
+                    || month > 12 || month < 1
+                    || year > 9999 || year < 1900) {
+                return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
+                        "Invalid birthday. Please use format ddmmyyyy");
+            }
+        } catch (Exception ex) {
+            return new AccountCreationResponse(CreationResponseCode.FAILED.getValue(),
+                    "Invalid birthday. Please use format ddmmyyyy");
+        }
+
         String ip = request.getRemoteAddr(); //Verify if IP has made an account recently.
         if (CreationThrottle.checkIP(ip)) {
-            CreationResponseCode verified = Database.verifyAccount(name, email);
-            switch (verified) {
+            CreationResponseCode valid = Database.verifyAccountName(name, email);
+            switch (valid) {
                 case FAILED:
-                    return new AccountCreationResponse(verified.getValue(),
+                    return new AccountCreationResponse(valid.getValue(),
                             "The provided name or email is already in use.");
                 case EXISTS_UNVERIFIED:
-                    return new AccountCreationResponse(verified.getValue(),
+                    return new AccountCreationResponse(valid.getValue(),
                             "This account already exists but hasn't been verified yet. Please login to this account to initiate "
                             + "the verification process.");
                 case SUCCESS:
@@ -75,15 +120,16 @@ public class AccountCreationController {
                         message = "Failed";
                     } else {
                         try {
-                            Database.addAuthcode(name);
+                            Database.addAuthcode(email);
                             Email.sendAuthMail(ip, Database.getAuthCode(name));
                         } catch (MessagingException ex) {
                             Logger.getLogger(AccountCreationController.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
+                    CreationThrottle.addIP(ip);
                     return new AccountCreationResponse(returned.getValue(), message);
                 default:
-                    return new AccountCreationResponse(verified.getValue(),
+                    return new AccountCreationResponse(valid.getValue(),
                             "Err.");
             }
         } else {

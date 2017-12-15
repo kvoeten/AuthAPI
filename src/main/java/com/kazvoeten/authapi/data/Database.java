@@ -33,7 +33,6 @@ import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.util.Pair;
@@ -49,7 +48,7 @@ public class Database {
     private static final HikariConfig config; //Hikari database config.
     private static final HikariDataSource ds; //Hikari datasource based on config.
     private static HashMap<String, Account> accounts = new HashMap<>(); //Map of loaded accounts by token.
-    private static HashMap<String, Pair<String, Date>> authCodes = new HashMap<>(); //Map of account verification codes sorted by name.
+    private static HashMap<String, Pair<String, Date>> authCodes = new HashMap<>(); //Map of account verification codes sorted by email.
     private static Random rand = new Random();
 
     static {
@@ -125,8 +124,8 @@ public class Database {
      */
     public static Account getAccountByName(String name) {
         for (Account acc : accounts.values()) {
-            if (acc.getName().equals(name) || 
-                    acc.getEmail().equals(name)) {
+            if (acc.getName().equals(name)
+                    || acc.getEmail().equals(name)) {
                 return acc;
             }
         }
@@ -143,7 +142,7 @@ public class Database {
         return accounts.get(token);
     }
 
-    public static CreationResponseCode verifyAccount(String name, String email) {
+    public static CreationResponseCode verifyAccountName(String name, String email) {
         try {
             Connection connection = ds.getConnection();
             PreparedStatement ps = connection.prepareStatement("SELECT * FROM accounts WHERE name = ? OR email = ?");
@@ -222,14 +221,27 @@ public class Database {
         });
     }
 
-    public static String getAuthCode(String name) {
-        if (authCodes.containsKey(name)) {
-            return authCodes.get(name).getKey();
+    public static String getAuthCode(String email) {
+        if (authCodes.containsKey(email)) {
+            return authCodes.get(email).getKey();
         }
         return "";
     }
 
-    public static void addAuthcode(String name) {
-        authCodes.put(name, new Pair<>(TokenFactory.genAuthenCode(), new Date()));
+    public static void addAuthcode(String email) {
+        authCodes.put(email, new Pair<>(TokenFactory.genAuthenCode(), new Date()));
+    }
+
+    public static boolean verifyAccount(String email) {
+        try {
+            Connection connection = ds.getConnection();
+            PreparedStatement ps = connection.prepareStatement("UPDATE accounts SET verified=true WHERE email=?");
+            ps.setString(1, email);
+            ps.execute();
+            return true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
     }
 }

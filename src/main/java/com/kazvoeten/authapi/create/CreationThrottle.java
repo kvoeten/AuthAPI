@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.kazvoeten.authapi.create;
 
 import java.util.HashMap;
@@ -29,21 +29,23 @@ public class CreationThrottle {
 
     /**
      * Checks if the supplied IP has created an Account in the last @time minutes.
-     * 
+     *
      * @param IP User's remote address.
      * @return true if user has not made an account recently.
      */
     public static boolean checkIP(String IP) {
         if (history.containsKey(IP)) {
             if (history.get(IP) <= System.currentTimeMillis()) {
-                history.put(IP, System.currentTimeMillis() + time);
+                history.remove(IP);
                 return true;
             } else {
                 return false;
             }
-        } else {
-            history.put(IP, System.currentTimeMillis() + time); //New account every 15 minutes max
-            return true;
         }
+        return true;
+    }
+
+    public static void addIP(String IP) {
+        history.put(IP, System.currentTimeMillis() + time); //New account every 15 minutes max
     }
 }

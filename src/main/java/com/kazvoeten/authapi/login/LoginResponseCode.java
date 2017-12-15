@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.kazvoeten.authapi.login;
 
 /**
@@ -28,13 +28,13 @@ public enum LoginResponseCode {
     SERVICE_UNAVAILABLE(4),
     WRONG_INFO(5),
     UNVERIFIED(6);
-    
+
     private int code;
-    
+
     LoginResponseCode(int code) {
         this.code = code;
     }
-    
+
     public int getValue() {
         return this.code;
     }

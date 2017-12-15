@@ -5,11 +5,7 @@
  */
 package com.kazvoeten.authapi.data;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
+import com.kazvoeten.authapi.Application;
 import java.util.Properties;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -24,9 +20,9 @@ import javax.mail.internet.MimeMessage;
  * @author kaz_v
  */
 public class Email {
-    private static final String host, service, address;
-    private static final String authMessage = 
-            "Your %s authentication code is: %s.\r\n"
+
+    private static final String authMessage
+            = "Your %s authentication code is: %s.\r\n"
             + "This code will remain valid for 15 minutes.\r\n"
             + "\r\nIf you did not request this code you can ignore this message.";
 
@@ -34,65 +30,27 @@ public class Email {
         System.out.println(recipent);
 
         Properties properties = System.getProperties();
-        properties.setProperty("mail.smtp.host", host);
-    	properties.put("mail.transport.protocol", "smtp");
-    	properties.put("mail.smtp.port", 25); 
+        properties.setProperty("mail.smtp.host", Application.SMTP_HOST);
+        properties.put("mail.transport.protocol", "smtp");
+        properties.put("mail.smtp.port", 25);
 
         Session session = Session.getDefaultInstance(properties);
 
         try {
             MimeMessage message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(address, "Verification generator."));
+            message.setFrom(new InternetAddress(Application.SERVICE_EMAIL, "Verification generator."));
 
             message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipent));
 
-            message.setSubject(String.format("Your %s verification code.", service));
-            message.setText(String.format(authMessage, service, code));
+            message.setSubject(String.format("Your %s verification code.", Application.SERVICE_NAME));
+            message.setText(String.format(authMessage, Application.SERVICE_NAME, code));
 
             Transport transport = session.getTransport();
-            transport.connect(host, "", "");
+            transport.connect(Application.SMTP_HOST, "", "");
             transport.sendMessage(message, message.getAllRecipients());
             transport.close();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        
-
-    }
-    
-    static {
-        File f = new File("config.ini");
-        if (!f.exists()) {
-            try (FileOutputStream fout = new FileOutputStream(f)) {
-                PrintStream out = new PrintStream(fout);
-                out.println("[Service Information]");
-                out.println("smtp_host=localhost");
-                out.println("service_title=AuthAPI");
-                out.println("service_email=test@authapi.com");
-                fout.flush();
-                fout.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.out.println("Please configure 'config.ini' and relaunch the service.");
-            System.exit(0);
-        }
-        Properties p = new Properties();
-        String a = "", b = "", c = ""; 
-        try {
-            try (FileReader fr = new FileReader(f)) {
-                p.load(fr);
-                a = p.getProperty("smtp_host");
-                b = p.getProperty("service_title");
-                c = p.getProperty("service_email");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        host = a;
-        service = b;
-        address = c;
-        p.clear();
     }
 }

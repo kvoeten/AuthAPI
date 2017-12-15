@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.kazvoeten.authapi.create;
 
 /**
@@ -21,12 +21,13 @@ package com.kazvoeten.authapi.create;
  * @author kaz_v
  */
 public class AccountCreationResponse {
+
     private final int value; //Response value
     private final String response; //Response message
-    
+
     /**
      * API response constructor
-     * 
+     *
      * @param value API response value.
      * @param response API response text.
      */
@@ -34,19 +35,19 @@ public class AccountCreationResponse {
         this.value = value;
         this.response = response;
     }
-    
+
     /**
-     * @return  Object's API response code value.
+     * @return Object's API response code value.
      */
     public int getValue() {
         return value;
     }
-    
+
     /**
      * @return Object's API response text.
      */
     public String getResponse() {
         return response;
     }
-    
+
 }
