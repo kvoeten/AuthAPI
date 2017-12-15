@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with AuthAPI.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.kazvoeten.authapi.data;
 
 import com.kazvoeten.authapi.create.CreationResponseCode;
@@ -50,7 +50,6 @@ public class Database {
     private static final HikariDataSource ds; //Hikari datasource based on config.
     private static HashMap<String, Account> accounts = new HashMap<>(); //Map of loaded accounts by token.
     private static HashMap<String, Pair<Integer, Date>> authCodes = new HashMap<>(); //Map of account verification codes sorted by name.
-    private static ReentrantLock lock = new ReentrantLock(true); //Fair lock to ensure DB concurrency. (Might be pointless in hindsight)
     private static Random rand = new Random();
 
     static {
@@ -77,10 +76,9 @@ public class Database {
     }
 
     /**
-     * Loads an account from the database by given name/e-mail.
-     * If the password matches the on in the database a token is generated and the account is loaded.
-     * Incorrect account info or database errors are caught and result in different return codes.
-     * 
+     * Loads an account from the database by given name/e-mail. If the password matches the on in the database a token is generated and the
+     * account is loaded. Incorrect account info or database errors are caught and result in different return codes.
+     *
      * @param name Account username or email
      * @param password Account password (plaintext)
      * @return LoginResponseCode operation result.
@@ -102,12 +100,14 @@ public class Database {
                 if (!BCrypt.checkpw(password, pwd)) {
                     return LoginResponseCode.WRONG_INFO;
                 }
+                String email = rs.getString("email");
+                boolean verified = rs.getBoolean("verified");
                 Date genTime = new Date();
                 String token = TokenFactory.genToken(id, name, genTime);
-                accounts.put(token, new Account(id, false, rs.getString("name"), token, rs.getString("email"), rs.getString("ip"),
+                accounts.put(token, new Account(id, verified, rs.getString("name"), token, email, rs.getString("ip"),
                         rs.getByte("state"), rs.getByte("admin"), rs.getByte("gender"),
                         rs.getDate("creation"), genTime, rs.getDate("history"), rs.getDate("birthday")));
-                return LoginResponseCode.SUCCESS;
+                return verified ? LoginResponseCode.SUCCESS : LoginResponseCode.UNVERIFIED;
             } else {
                 return LoginResponseCode.FAIL_UNKNOWN;
             }
@@ -119,13 +119,14 @@ public class Database {
 
     /**
      * Gets Account from loaded accounts by name
-     * 
+     *
      * @param name Name of the Account.
      * @return Account
      */
     public static Account getAccountByName(String name) {
         for (Account acc : accounts.values()) {
-            if (acc.getName().equals(name)) {
+            if (acc.getName().equals(name) || 
+                    acc.getEmail().equals(name)) {
                 return acc;
             }
         }
@@ -134,7 +135,7 @@ public class Database {
 
     /**
      * Gets Account from loaded accounts by token
-     * 
+     *
      * @param token Token assigned to the Account.
      * @return Account
      */
@@ -152,7 +153,7 @@ public class Database {
             if (rs.first()) {
                 if (rs.getBoolean("verified")) {
                     return CreationResponseCode.FAILED;
-                } 
+                }
                 return CreationResponseCode.EXISTS_UNVERIFIED;
             }
             return CreationResponseCode.SUCCESS;
@@ -160,22 +161,20 @@ public class Database {
             return CreationResponseCode.FAILED;
         }
     }
-    
+
     /**
-     * 
-     * 
+     *
+     *
      * @param email New Account's email
      * @param name New Account's name
      * @param password New Account's password
      * @param birthday New Account's birthday
      * @param gender New Account's gender
      * @param ip New Account's ip
-     * @return 
+     * @return
      */
     public static CreationResponseCode createAccount(String email, String name, String password, String birthday, String gender, String ip) {
-        CreationResponseCode ret = CreationResponseCode.FAILED;
         try {
-            lock.lock();
             Connection connection = ds.getConnection();
             PreparedStatement ps = connection.prepareStatement(""
                     + "INSERT INTO accounts (name, email, password, birthday, creation, history, gender, ip) "
@@ -184,57 +183,53 @@ public class Database {
             ps.setString(2, email);
             ps.setString(3, BCrypt.hashpw(password, BCrypt.gensalt()));
             ps.setDate(4, new java.sql.Date(
-                new DateTime(
-                    Integer.parseInt(birthday.substring(4, 8)), //y
-                    Integer.parseInt(birthday.substring(2, 4)), //m
-                    Integer.parseInt(birthday.substring(0, 2)), //d
-                    0, 0, DateTimeZone.getDefault()
-                ).getMillis())
+                    new DateTime(
+                            Integer.parseInt(birthday.substring(4, 8)), //y
+                            Integer.parseInt(birthday.substring(2, 4)), //m
+                            Integer.parseInt(birthday.substring(0, 2)), //d
+                            0, 0, DateTimeZone.getDefault()
+                    ).getMillis())
             );
             ps.setDate(5, new java.sql.Date(System.currentTimeMillis()));
             ps.setDate(6, new java.sql.Date(System.currentTimeMillis()));
             ps.setByte(7, (byte) Integer.parseInt(gender));
             ps.setString(8, ip);
             ps.execute();
-            authCodes.put(name, new Pair<>(rand.nextInt(Integer.MIN_VALUE), new Date()));
-            ret = CreationResponseCode.SUCCESS;
-        } finally {
-            lock.unlock();
-            return ret;
+            return CreationResponseCode.SUCCESS;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return CreationResponseCode.FAILED;
         }
     }
-    
+
     public static void checkTokenExpiration() {
         long expiration = (1000 * 60 * 15); //Tokens expire after 15 mins.
         long time = (new Date()).getTime(); //Current time.
-        try {
-            lock.lock();
-            accounts.forEach((token, account) -> {
-                if (account.getLoaded().getTime() + expiration <= time) {
-                    accounts.remove(token);
-                }
-            });
-        } finally {
-            lock.unlock();
-        }
+        accounts.forEach((token, account) -> {
+            if (account.getLoaded().getTime() + expiration <= time) {
+                accounts.remove(token);
+            }
+        });
     }
-    
+
     public static void checkAuthCodesExpirated() {
         long expiration = (1000 * 60 * 15); //Auth codes expire after 15 mins.
         long time = (new Date()).getTime(); //Current time.
-        try {
-            lock.lock();
-            authCodes.forEach((name, pair) -> {
-                if (pair.getValue().getTime() + expiration <= time) {
-                    authCodes.remove(name);
-                }
-            });
-        } finally {
-            lock.unlock();
-        }
+        authCodes.forEach((name, pair) -> {
+            if (pair.getValue().getTime() + expiration <= time) {
+                authCodes.remove(name);
+            }
+        });
     }
-    
+
     public static int getAuthCode(String name) {
-        return authCodes.get(name).getKey();
+        if (authCodes.containsKey(name)) {
+            return authCodes.get(name).getKey();
+        }
+        return -1;
+    }
+
+    public static void addAuthcode(String name) {
+        authCodes.put(name, new Pair<>(rand.nextInt(Integer.MAX_VALUE), new Date()));
     }
 }

@@ -18,7 +18,11 @@ package com.kazvoeten.authapi.login;
 
 import com.kazvoeten.authapi.login.account.Account;
 import com.kazvoeten.authapi.data.Database;
+import com.kazvoeten.authapi.data.Email;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.mail.MessagingException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +47,22 @@ public class LoginController {
             return new LoginResponse(acc.getName(), acc.getToken(), code);
         }
         
-        return new LoginResponse("null", "null", code);
+        if (code == LoginResponseCode.UNVERIFIED) {
+            Account acc = Database.getAccountByName(name);
+            if (Database.getAuthCode(acc.getName()) > -1) {
+                return new LoginResponse("Please use the verification code sent to the account's "
+                        + "e-mail address to verify the account.", "-1", code);
+            } else {
+                Database.addAuthcode(name);
+                try {
+                    Email.sendAuthMail(acc.getEmail(), Database.getAuthCode(name));
+                } catch (MessagingException ex) {
+                    ex.printStackTrace();
+                }
+                return new LoginResponse("New authentication code sent to account email.", "-1", code);
+            }
+        }
+        
+        return new LoginResponse("Login failed.", "null", code);
     }
 }

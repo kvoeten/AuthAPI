@@ -8,6 +8,7 @@ package com.kazvoeten.authapi.data;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Properties;
 import javax.mail.Message;
@@ -30,6 +31,7 @@ public class Email {
             + "\r\nIf you did not request this code you can ignore this message.";
 
     public static void sendAuthMail(String recipent, int code) throws AddressException, MessagingException {
+        System.out.println(recipent);
 
         Properties properties = System.getProperties();
         properties.setProperty("mail.smtp.host", host);
@@ -43,7 +45,7 @@ public class Email {
             message.addRecipient(Message.RecipientType.TO,
                     new InternetAddress(host));
 
-            message.setSubject("Verification code.");
+            message.setSubject(String.format("Your %s verification code.", service));
             message.setText(String.format(authMessage, service, code));
 
             Transport.send(message);
@@ -59,12 +61,13 @@ public class Email {
             try (FileOutputStream fout = new FileOutputStream(f)) {
                 PrintStream out = new PrintStream(fout);
                 out.println("[Service Information]");
-                out.println("smtp_host = localhost");
-                out.println("service_title = AithAPI");
-                out.println("service_email = test@localhost");
+                out.println("smtp_host=localhost");
+                out.println("service_title=AuthAPI");
+                out.println("service_email=test@authapi.com");
                 fout.flush();
                 fout.close();
             } catch (Exception e) {
+                e.printStackTrace();
             }
             System.out.println("Please configure 'config.ini' and relaunch the service.");
             System.exit(0);
@@ -72,15 +75,15 @@ public class Email {
         Properties p = new Properties();
         String a = "", b = "", c = ""; 
         try {
-            FileReader fr = new FileReader(f);
-            p.load(fr);
-            a = p.getProperty("smtp_host");
-            b = p.getProperty("service_title");
-            c = p.getProperty("service_email");
-            fr.close();
-        } catch (Exception e) {
-            System.exit(1);
+            try (FileReader fr = new FileReader(f)) {
+                p.load(fr);
+                a = p.getProperty("smtp_host");
+                b = p.getProperty("service_title");
+                c = p.getProperty("service_email");
+            }
+        } catch (IOException e) {
             e.printStackTrace();
+            System.exit(1);
         }
         host = a;
         service = b;

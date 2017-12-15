@@ -35,7 +35,7 @@ public class AccountController {
     @RequestMapping("/account")
     public Account account(@RequestParam(value="token", defaultValue="null") String token) {
         Account account = Database.getAccountByToken(token);
-        if (account != null) {
+        if (account != null && account.getVerified()) {
             return account;
         } else {
             return basic;

@@ -75,6 +75,7 @@ public class AccountCreationController {
                         message = "Failed";
                     } else {
                         try {
+                            Database.addAuthcode(name);
                             Email.sendAuthMail(ip, Database.getAuthCode(name));
                         } catch (MessagingException ex) {
                             Logger.getLogger(AccountCreationController.class.getName()).log(Level.SEVERE, null, ex);
