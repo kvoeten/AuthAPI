@@ -58,6 +58,7 @@ public class TokenFactory {
 
             return bytesToHex(encrypted);
         } catch (Exception ex) {
+            ex.printStackTrace();
             return "TOKEN_BROKEN";
         }
     }
@@ -87,6 +88,7 @@ public class TokenFactory {
 
             return realToken.split(":");
         } catch (Exception ex) {
+            ex.printStackTrace();
             return null;
         }
     }
