@@ -43,6 +43,7 @@ Creates a new Account by specified parameters. A new account can only be (succes
 http://localhost:8080/create?email=example@auth.apil&name=examplek&password=example&birthday=01011800&gender=0
 ```
 **PARAMETERS**
+
 | Parameter | Value | Optional |
 | ------ | ------ | ------ |
 | email | A valid email address in the format name@service.com. | no
@@ -72,6 +73,7 @@ Logs in an account if the provided details are correct and creates returns a uni
 http://localhost:8080/login?name=example&password=example
 ```
 **PARAMETERS**
+
 | Parameter | Value | Optional |
 | ------ | ------ | ------ |
 | name | UTF-8 formatted string between 5-13 characters long. (Account name or email) | no
@@ -100,6 +102,7 @@ Retreives account information by token if the account is logged in and the token
 http://localhost:8080/account?token=ABCDEFG
 ```
 **PARAMETERS**
+
 | Parameter | Value | Optional |
 | ------ | ------ | ------ |
 | token | any string | yes
@@ -147,6 +150,7 @@ Verifies an account based on email and verification code.
 http://localhost:8080/verify?email=example@auth.api&code=1234
 ```
 **PARAMETERS**
+
 | Parameter | Value | Optional |
 | ------ | ------ | ------ |
 | email | Account e-mail address to be verified. | no
