@@ -12,7 +12,7 @@ The general usage of this API is the ability to have a secure, solid SSO system.
 
 # Installation:
 
-Download the latest build [here.](https://bitbucket.org/Noviakaz/authapi-service/downloads/)
+Download the latest build [here.](https://github.com/kvoeten/AuthAPI/releases)
 AuthAPI uses Java (JRE) 8. You can download the latest version of Java 8 on [Oracle website.](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)
 
 1. Extract the downloaded files to any folder using [WinRar](https://www.winrar.nl/)
