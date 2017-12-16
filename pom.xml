@@ -4,7 +4,7 @@
     
     <groupId>com.kazvoeten</groupId>
     <artifactId>AuthAPI</artifactId>
-    <version>1.0-1</version>
+    <version>1.0.8.RELEASE</version>
     
     <parent>
         <groupId>org.springframework.boot</groupId>
